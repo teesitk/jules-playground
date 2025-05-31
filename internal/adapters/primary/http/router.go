@@ -33,7 +33,7 @@ func NewRouter(cfg *RouterConfig) *mux.Router {
 
 	// Public routes
 	router.HandleFunc("/health", HealthCheckHandler).Methods(http.MethodGet)
-	
+
 	authRouter := router.PathPrefix("/auth").Subrouter()
 	authRouter.HandleFunc("/register", userHandler.Register).Methods(http.MethodPost)
 	authRouter.HandleFunc("/login", userHandler.Login).Methods(http.MethodPost)
@@ -51,11 +51,11 @@ func NewRouter(cfg *RouterConfig) *mux.Router {
 
 	// Example: POST /api/products for creating a product
 	apiRouter.HandleFunc("/products", productHandler.CreateProduct).Methods(http.MethodPost)
-	
+
 	// You could also have specific protected routes for products if needed:
 	// protectedProductRouter := router.PathPrefix("/products").Subrouter()
 	// protectedProductRouter.Use(authMw)
-	// protectedProductRouter.HandleFunc("", productHandler.CreateProduct).Methods(http.MethodPost) 
+	// protectedProductRouter.HandleFunc("", productHandler.CreateProduct).Methods(http.MethodPost)
 	// Note: The above line would conflict with GET /products if not careful with prefixing or separate routers.
 	// Using /api/products for POST is clearer.
 

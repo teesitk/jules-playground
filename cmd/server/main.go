@@ -1,15 +1,15 @@
 package main
 
 import (
-	"entertainment-ecommerce-platform/internal/adapters/primary/http" 
-	pg_adapter "entertainment-ecommerce-platform/internal/adapters/secondary/postgres" 
-	bcrypt_adapter "entertainment-ecommerce-platform/internal/adapters/secondary/bcrypt" 
-	jwt_adapter "entertainment-ecommerce-platform/internal/adapters/secondary/jwt"    
+	"entertainment-ecommerce-platform/internal/adapters/primary/http"
+	pg_adapter "entertainment-ecommerce-platform/internal/adapters/secondary/postgres"
+	bcrypt_adapter "entertainment-ecommerce-platform/internal/adapters/secondary/bcrypt"
+	jwt_adapter "entertainment-ecommerce-platform/internal/adapters/secondary/jwt"
 	"entertainment-ecommerce-platform/internal/config"
-	core_services "entertainment-ecommerce-platform/internal/core/services" 
+	core_services "entertainment-ecommerce-platform/internal/core/services"
 	"fmt"
 	"log"
-	stdhttp "net/http" 
+	stdhttp "net/http"
 	"os"
 	"time"
 )
@@ -43,7 +43,7 @@ func main() {
 	userRepository := pg_adapter.NewPostgreSQLUserRepository(db)
 	productRepository := pg_adapter.NewPostgreSQLProductRepository(db) // Instantiate ProductRepository
 
-	passwordHasher := bcrypt_adapter.NewBcryptHasher(0) 
+	passwordHasher := bcrypt_adapter.NewBcryptHasher(0)
 	tokenGenerator, tokenValidator, err := jwt_adapter.NewJWTManager(jwtSecret, jwtDurationMinutes)
 	if err != nil {
 		log.Fatalf("Failed to create JWT Manager: %v", err)
@@ -67,7 +67,7 @@ func main() {
 
 	httpServer := &stdhttp.Server{
 		Addr:         serverAddr,
-		Handler:      router, 
+		Handler:      router,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
