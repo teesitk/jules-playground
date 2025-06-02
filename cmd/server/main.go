@@ -5,6 +5,7 @@ import (
 	pg_adapter "entertainment-ecommerce-platform/internal/adapters/secondary/postgres"
 	bcrypt_adapter "entertainment-ecommerce-platform/internal/adapters/secondary/bcrypt"
 	jwt_adapter "entertainment-ecommerce-platform/internal/adapters/secondary/jwt"
+	s3_adapter "entertainment-ecommerce-platform/internal/adapters/secondary/s3" // Added S3 Adapter
 	"entertainment-ecommerce-platform/internal/config"
 	core_services "entertainment-ecommerce-platform/internal/core/services"
 	"fmt"
@@ -15,10 +16,12 @@ import (
 )
 
 func main() {
+	// --- Load Configuration ---
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
+	// JWT Config (already present)
 	jwtSecret := os.Getenv("JWT_SECRET_KEY")
 	if jwtSecret == "" {
 		log.Println("Warning: JWT_SECRET_KEY not set, using default insecure key.")
@@ -31,6 +34,7 @@ func main() {
 		jwtDurationMinutes = 60 * time.Minute
 	}
 
+	// --- Connect to Database ---
 	dbCfg := pg_adapter.DBConfig{DSN: cfg.DatabaseURL}
 	db, err := pg_adapter.ConnectDB(dbCfg)
 	if err != nil {
@@ -41,7 +45,8 @@ func main() {
 
 	// --- Instantiate Secondary Adapters (Driven Adapters) ---
 	userRepository := pg_adapter.NewPostgreSQLUserRepository(db)
-	productRepository := pg_adapter.NewPostgreSQLProductRepository(db) // Instantiate ProductRepository
+	productRepository := pg_adapter.NewPostgreSQLProductRepository(db)
+	videoRepository := pg_adapter.NewPostgreSQLVideoRepository(db) // Instantiate VideoRepository
 
 	passwordHasher := bcrypt_adapter.NewBcryptHasher(0)
 	tokenGenerator, tokenValidator, err := jwt_adapter.NewJWTManager(jwtSecret, jwtDurationMinutes)
@@ -49,14 +54,28 @@ func main() {
 		log.Fatalf("Failed to create JWT Manager: %v", err)
 	}
 
+	fileStorage, err := s3_adapter.NewS3StorageAdapter(cfg.AWS) // Instantiate S3StorageAdapter
+	if err != nil {
+		log.Fatalf("Failed to create S3 Storage Adapter: %v", err)
+	}
+
+
 	// --- Instantiate Core Services (Application Logic) ---
 	userService := core_services.NewUserService(userRepository, passwordHasher, tokenGenerator)
-	productService := core_services.NewProductService(productRepository) // Instantiate ProductService
+	productService := core_services.NewProductService(productRepository)
+	videoService := core_services.NewVideoService( // Instantiate VideoService
+		videoRepository,
+		userRepository,    // VideoService needs UserRepository
+		productRepository, // VideoService needs ProductRepository
+		fileStorage,
+		cfg.AWS.S3BucketName,
+	)
 
 	// --- Setup Router (Primary Adapter - HTTP) ---
 	routerCfg := &http.RouterConfig{
 		UserService:    userService,
-		ProductService: productService, // Pass ProductService
+		ProductService: productService,
+		VideoService:   videoService, // Pass VideoService
 		TokenValidator: tokenValidator,
 	}
 	router := http.NewRouter(routerCfg)
