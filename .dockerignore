@@ -1,0 +1,32 @@
+# Ignore .git directory
+.git
+.gitignore
+
+# Ignore IDE and OS-specific files
+.idea/
+.vscode/
+*.DS_Store
+*.swp
+*~
+
+# Ignore local build artifacts if any (though Go typically builds in place or GOBIN)
+# *.exe
+# *.out
+
+# Ignore Dockerfile and docker-compose.yml if they are not needed inside the image
+# (they are used to build the image, not run inside it)
+Dockerfile
+docker-compose.yml
+
+# If you have vendor directory and don't want it in the image explicitly
+# vendor/
+
+# Any local configuration files not meant for the Docker image
+# config.local.yaml
+# .env
+
+# Test files (if you don't run tests inside the final image)
+*_test.go
+
+# Placeholder files if any
+.placeholder
